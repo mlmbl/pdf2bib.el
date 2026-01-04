@@ -1,0 +1,245 @@
+#+TITLE: pdf2bib.el
+#+AUTHOR: mlmbl (Yuji TAKENOSHITA)
+#+EMAIL: yuji.takenoshita@gmail.com
+
+* pdf2bib.el
+
+An Emacs interface to the [[https://github.com/MicheleCotrufo/pdf2bib][pdf2bib]] Python tool for extracting bibliographic information from PDF files and generating BibTeX entries.
+
+* Features
+
+- *Extract BibTeX from PDFs*: Generate bibliographic entries from academic papers
+- *Custom BibTeX keys*: Auto-generate keys in the format =lastname+year+random= (e.g., =lennon1967-gb=)
+- *Duplicate detection*: Check for existing DOI entries before adding
+- *Context-aware*: Automatically detect PDF files in dired-mode or pdf-tools
+
+   
+* Prerequisites
+
+** Python Requirements
+
+Install the pdf2bib Python package:
+
+#+begin_src bash
+pip install pdf2bib
+#+end_src
+
+Verify installation:
+
+#+begin_src bash
+pdf2bib --help
+#+end_src
+
+* Emacs Requirements
+
+- Emacs 27.1 or later
+- =bibtex.el= (built-in)
+
+* Optional Dependencies
+
+- [[https://github.com/vedang/pdf-tools][pdf-tools]] - For enhanced PDF viewing
+- [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Dired.html][dired]] - Built-in file manager
+
+- Installation
+
+* Using straight.el
+
+#+begin_src elisp
+(straight-use-package
+ '(pdf2bib :type git :host github :repo "mlmbl/pdf2bib.el"))
+#+end_src
+
+* Using use-package with straight.el
+
+#+begin_src elisp
+(use-package pdf2bib
+  :straight (:host github :repo "mlmbl/pdf2bib.el")
+  :custom
+  (pdf2bib-default-bib-file "~/bibliography.bib")
+  :config
+  ;; Optional: Set custom pdf2bib command path
+  (setq pdf2bib-python-command "pdf2bib"))
+#+end_src
+
+* Manual Installation
+
+1. Clone this repository:
+   #+begin_src bash
+   git clone https://github.com/mlmbl/pdf2bib.el.git
+   #+end_src
+
+2. Add to your Emacs configuration:
+   #+begin_src elisp
+   (add-to-list 'load-path "/path/to/pdf2bib.el")
+   (require 'pdf2bib)
+   #+end_src
+
+- Usage
+
+* Basic Commands
+
+*/ =pdf2bib-insert-bibtex-from-pdf=
+
+Insert a BibTeX entry at the current cursor position.
+
+#+begin_example
+M-x pdf2bib-insert-bibtex-from-pdf
+#+end_example
+
+/Use case/: Quick preview or temporary insertion of BibTeX entries.
+
+*/ =pdf2bib-add-pdf-to-bib=
+
+Add a PDF's BibTeX entry to your bibliography file with automatic key generation and duplicate checking.
+
+#+begin_example
+M-x pdf2bib-add-pdf-to-bib
+#+end_example
+
+/Context-aware behavior/:
+- In =pdf-view-mode=: Uses the currently viewed PDF
+- In =dired-mode=: Uses the PDF file at point
+- Otherwise: Prompts for a PDF file
+
+*/ =pdf2bib-regenerate-bibtex-key=
+
+Regenerate the BibTeX key for the entry at point.
+
+#+begin_example
+M-x pdf2bib-regenerate-bibtex-key
+#+end_example
+
+* Example Workflows
+
+*/ Workflow 1: Adding a single paper
+
+1. Open a PDF in pdf-tools or locate it in dired
+2. Run =M-x pdf2bib-add-pdf-to-bib=
+3. Select your bibliography file (or use the default)
+4. The entry is added with a custom key and duplicate checking
+
+*/ Workflow 2: Batch processing in dired
+
+1. Open dired in your papers directory
+2. Move cursor to a PDF file
+3. Run =M-x pdf2bib-add-pdf-to-bib=
+4. Repeat for other files
+
+*/ Workflow 3: Quick preview
+
+1. Run =M-x pdf2bib-insert-bibtex-from-pdf=
+2. Select a PDF file
+3. Review the generated BibTeX entry
+4. Optionally run =M-x pdf2bib-regenerate-bibtex-key= to customize the key
+
+- Configuration
+
+* Default Bibliography File
+
+Set a default bibliography file to avoid prompting:
+
+#+begin_src elisp
+(setq pdf2bib-default-bib-file "~/papers/bibliography.bib")
+#+end_src
+
+* Custom pdf2bib Command
+
+If pdf2bib is not in your PATH or you want to use a specific version:
+
+#+begin_src elisp
+(setq pdf2bib-python-command "/path/to/pdf2bib")
+;; or with conda
+(setq pdf2bib-python-command "conda run -n myenv pdf2bib")
+#+end_src
+
+* Integration with org-cite
+
+Automatically use =org-cite-global-bibliography=:
+
+#+begin_src elisp
+(use-package pdf2bib
+  :custom
+  (pdf2bib-default-bib-file nil)  ; Will use org-cite setting
+  :config
+  ;; pdf2bib will automatically detect org-cite-global-bibliography
+  )
+#+end_src
+
+* Customization via M-x customize-group
+
+#+begin_example
+M-x customize-group RET pdf2bib RET
+#+end_example
+
+Available options:
+- =pdf2bib-default-bib-file=: Default bibliography file
+- =pdf2bib-python-command=: Command to run pdf2bib
+
+- BibTeX Key Format
+
+Generated keys follow the pattern: =lastname+year+random=
+
+Examples:
+- =lennon1967-gb=
+- =einstein1905-xf=
+- =turing1936-mq=
+
+Where:
+- =lastname=: First author's last name (lowercase)
+- =year=: Publication year
+- =random=: Two random lowercase letters for uniqueness
+
+- Duplicate Detection
+
+The package checks for duplicate DOI entries before adding to your bibliography:
+
+- If a duplicate is found: Opens the existing entry and displays a message
+- If no duplicate: Adds the new entry with a custom key
+
+- Troubleshooting
+
+* pdf2bib command not found
+
+Ensure pdf2bib is installed and in your PATH:
+
+#+begin_src bash
+which pdf2bib
+#+end_src
+
+If not found, specify the full path:
+
+#+begin_src elisp
+(setq pdf2bib-python-command "/full/path/to/pdf2bib")
+#+end_src
+
+* No bibliographic information found
+
+Some PDFs may not contain extractable metadata. Try:
+1. Checking if the PDF is a scanned document (OCR may be needed)
+2. Manually searching for the paper's DOI
+3. Using alternative tools like [[https://www.crossref.org/][CrossRef]]
+
+* Byte-compilation warnings
+
+If you see warnings about =pdf-view-mode= or =dired-get-filename=, these are expected. The package uses =declare-function= to safely handle optional dependencies.
+
+- Contributing
+
+Contributions are welcome! Please feel free to submit issues or pull requests on [[https://github.com/mlmbl/pdf2bib.el][GitHub]].
+
+- License
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+See [[file:LICENSE][LICENSE]] for details.
+
+- Acknowledgments
+
+- [[https://github.com/MicheleCotrufo/pdf2bib][pdf2bib]] - The underlying Python tool
+- The Emacs community for =bibtex.el= and related tools
+
+- Related Projects
+
+- [[https://github.com/jkitchin/org-ref][org-ref]] - Citations in org-mode
+- [[https://github.com/emacs-citar/citar][citar]] - Bibliography management
+- [[https://github.com/vedang/pdf-tools][pdf-tools]] - PDF viewing in Emacs
